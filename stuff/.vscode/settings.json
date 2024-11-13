@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.asm": "fasm-intel-x86_64",
+        "iosfwd": "cpp",
+        "ostream": "cpp",
+        "iostream": "cpp",
+        "xtr1common": "cpp",
+        "xstring": "cpp"
+    }
+}
