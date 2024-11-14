@@ -92,6 +92,8 @@ typedef struct
 } COFFAPIFUNC;
 
 void CoffeeLdr(PCHAR EntryName, PVOID CoffeeData, PVOID ArgData, SIZE_T ArgSize);
+BOOL CoffeeExecuteFunction(PCOFFEE Coffee, PCHAR Function, PVOID Argument, SIZE_T Size);
+BOOL CoffeeProcessSections(PCOFFEE Coffee);
 BOOL CoffeeCleanup(PCOFFEE Coffee);
 
 #endif

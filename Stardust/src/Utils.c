@@ -59,16 +59,3 @@ FUNC ULONG HashString(
 
     return Hash;
 }
-
-FUNC PVOID GetInstance()
-{
-    PPVOID Heaps = NtCurrentPeb()->ProcessHeaps;
-    ULONG NumberOfHeaps = NtCurrentPeb()->NumberOfHeaps;
-    for (ULONG i = 0; i < NumberOfHeaps; i++)
-    {
-        if (((PINSTANCE)Heaps[i])->Magic == 0x41424344)
-        {
-            return Heaps[i];
-        }
-    }
-}

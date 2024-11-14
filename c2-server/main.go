@@ -118,11 +118,11 @@ func main() {
 		data, _ := c.GetRawData()
 		pack := pkg.Package{Buffer: data, Length: uint32(len(data))}
 		packReader := pkg.NewPackageReader(&pack)
-		fileId, _ := packReader.GetString()
+		id, _ := packReader.GetString()
 
-		agent, _ := db.GetAgentByHost(c.ClientIP())
-		task, err := db.GetOldestTaskByAgentID(agent.ID)
-		if err != nil || task.FileID != fileId {
+		task, err := db.GetTaskByID(id)
+		println(task.ID, task.FilePath)
+		if err != nil {
 			c.Status(http.StatusNotFound)
 			return
 		}

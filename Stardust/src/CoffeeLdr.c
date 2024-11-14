@@ -1,4 +1,3 @@
-
 #include <CoffeeLdr.h>
 
 FUNC PVOID CoffeeProcessSymbol(LPSTR Symbol)
@@ -60,7 +59,8 @@ FUNC PVOID CoffeeProcessSymbol(LPSTR Symbol)
         for (DWORD i = 0; i < BEACON_API_COUNT; i++)
         {
             if (HashString(SymFunction, 0) == BeaconApi[i].NameHash)
-                return Instance()->Base.Buffer + (UINT_PTR)BeaconApi[i].Pointer; // BeaconApi[i].Pointer is offset from shc base i guess
+                return Instance()->Base.Buffer + (UINT_PTR)BeaconApi[i].Pointer;
+            // BeaconApi[i].Pointer is offset from shc base i guess
         }
     }
     else if (HashString(Symbol, COFF_PREP_SYMBOL_SIZE) == COFF_PREP_SYMBOL)
@@ -104,9 +104,13 @@ FUNC BOOL CoffeeExecuteFunction(PCOFFEE Coffee, PCHAR Function, PVOID Argument, 
             Success = TRUE;
             // set the .text section to RX
             // BOOL __stdcall VirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
-            Instance()->Win32.VirtualProtect(Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Ptr, Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Size, PAGE_EXECUTE_READ, &OldProtection);
+            Instance()->Win32.VirtualProtect(Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Ptr,
+                                             Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Size,
+                                             PAGE_EXECUTE_READ, &OldProtection);
             // SysNtProtectVirtualMemory(NtCurrentProcess(), &Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Ptr, &Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Size, PAGE_EXECUTE_READ, &OldProtection);
-            CoffeeMain = (COFFEEMAIN)(Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Ptr + Coffee->Symbol[SymCounter].Value);
+            CoffeeMain = (COFFEEMAIN)(Coffee->SecMap[Coffee->Symbol[SymCounter].SectionNumber - 1].Ptr + Coffee->Symbol
+                                                                                                             [SymCounter]
+                                                                                                                 .Value);
 
             CoffeeMain(Argument, Size);
         }
@@ -125,8 +129,8 @@ FUNC BOOL CoffeeCleanup(PCOFFEE Coffee)
     {
         if (Coffee->SecMap[SecCnt].Ptr && Coffee->SecMap[SecCnt].Size)
         {
-
-            if (!NT_SUCCESS(SysNtProtectVirtualMemory(NtCurrentProcess(), (PPVOID)&Coffee->SecMap[SecCnt].Ptr, &Coffee->SecMap[SecCnt].Size, PAGE_READWRITE, NULL)))
+            if (!NT_SUCCESS(
+                    SysNtProtectVirtualMemory(NtCurrentProcess(), (PPVOID)&Coffee->SecMap[SecCnt].Ptr, &Coffee->SecMap[SecCnt].Size, PAGE_READWRITE, NULL)))
             {
                 return FALSE;
             }
@@ -180,7 +184,8 @@ FUNC BOOL CoffeeProcessSections(PCOFFEE Coffee)
                 {
                     MmCopy(&OffsetLong, Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress, sizeof(UINT64));
 
-                    OffsetLong = (UINT64)(Coffee->SecMap[Coffee->Symbol[Coffee->Reloc->SymbolTableIndex].SectionNumber - 1].Ptr + (UINT64)OffsetLong);
+                    OffsetLong = (UINT64)(Coffee->SecMap[Coffee->Symbol[Coffee->Reloc->SymbolTableIndex].SectionNumber - 1].Ptr + (UINT64)
+                                                                                                                                      OffsetLong);
 
                     MmCopy(Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress, &OffsetLong, sizeof(UINT64));
                 }
@@ -191,11 +196,14 @@ FUNC BOOL CoffeeProcessSections(PCOFFEE Coffee)
                     if (((PCHAR)(Coffee->SecMap[Coffee->Symbol[Coffee->Reloc->SymbolTableIndex].SectionNumber - 1].Ptr + Offset) - (PCHAR)(Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress + 4)) > 0xffffffff)
                         return FALSE;
 
-                    Offset = (UINT32)((PCHAR)(Coffee->SecMap[Coffee->Symbol[Coffee->Reloc->SymbolTableIndex].SectionNumber - 1].Ptr + Offset) - (PCHAR)(Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress + 4));
+                    Offset = (UINT32)((PCHAR)(Coffee->SecMap[Coffee->Symbol[Coffee->Reloc->SymbolTableIndex].SectionNumber - 1].Ptr +
+                                              Offset) -
+                                      (PCHAR)(Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress + 4));
 
                     MmCopy(Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress, &Offset, sizeof(UINT32));
                 }
-                else if (IMAGE_REL_AMD64_REL32 <= Coffee->Reloc->Type && Coffee->Reloc->Type <= IMAGE_REL_AMD64_REL32_5)
+                else if (IMAGE_REL_AMD64_REL32 <= Coffee->Reloc->Type && Coffee->Reloc->Type <=
+                                                                             IMAGE_REL_AMD64_REL32_5)
                 {
                     MmCopy(&Offset, Coffee->SecMap[SectionCnt].Ptr + Coffee->Reloc->VirtualAddress, sizeof(UINT32));
 
@@ -282,8 +290,35 @@ FUNC void CoffeeLdr(PCHAR EntryName, PVOID CoffeeData, PVOID ArgData, SIZE_T Arg
 
     for (DWORD SecCnt = 0; SecCnt < Coffee.Header->NumberOfSections; SecCnt++)
     {
+
         Coffee.Section = U_PTR(Coffee.Data) + sizeof(COFF_FILE_HEADER) + U_PTR(sizeof(COFF_SECTION) * SecCnt);
         Coffee.SecMap[SecCnt].Size = Coffee.Section->SizeOfRawData;
+
+        ULONG Protection = 0;
+        ULONG Characteristics = Coffee.Section->Characteristics;
+
+        if (Characteristics & IMAGE_SCN_MEM_EXECUTE)
+        {
+            if (Characteristics & IMAGE_SCN_MEM_WRITE)
+            {
+                Protection = (Characteristics & IMAGE_SCN_MEM_READ) ? PAGE_EXECUTE_READWRITE : PAGE_EXECUTE_WRITECOPY;
+            }
+            else
+            {
+                Protection = (Characteristics & IMAGE_SCN_MEM_READ) ? PAGE_EXECUTE_READ : PAGE_EXECUTE;
+            }
+        }
+        else
+        {
+            if (Characteristics & IMAGE_SCN_MEM_WRITE)
+            {
+                Protection = (Characteristics & IMAGE_SCN_MEM_READ) ? PAGE_READWRITE : PAGE_WRITECOPY;
+            }
+            else
+            {
+                Protection = (Characteristics & IMAGE_SCN_MEM_READ) ? PAGE_READONLY : 0;
+            }
+        }
 
         SIZE_T secSize = Coffee.SecMap[SecCnt].Size;
         SysNtAllocateVirtualMemory(
@@ -292,7 +327,7 @@ FUNC void CoffeeLdr(PCHAR EntryName, PVOID CoffeeData, PVOID ArgData, SIZE_T Arg
             0,
             &secSize,
             MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN,
-            PAGE_READWRITE);
+            Protection);
 
         MmCopy(Coffee.SecMap[SecCnt].Ptr, U_PTR(CoffeeData) + Coffee.Section->PointerToRawData,
                Coffee.Section->SizeOfRawData);

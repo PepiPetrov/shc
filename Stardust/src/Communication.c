@@ -125,8 +125,8 @@ LEAVE:
 
 FUNC BUFFER FileFetch(PCHAR FileId, PCHAR TaskID)
 {
-    PPACKAGE filePkg = PackageCreate(FileId);
-    PackageAddString(filePkg, FileId);
+    PPACKAGE filePkg = PackageCreate(TaskID);
+    PackageAddString(filePkg, TaskID);
     BUFFER File = SendRequest(L"http://localhost:8000/file", L"POST", filePkg);
 
     return File;

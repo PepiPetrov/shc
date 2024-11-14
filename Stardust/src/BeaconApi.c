@@ -297,14 +297,15 @@ FUNC char *BeaconGetOutputData(int *outsize)
 {
     STARDUST_INSTANCE
 
-    char *outdata = Instance()->BOFOutput.beacon_compatibility_output;
-
-    if (outsize)
-        *outsize = Instance()->BOFOutput.beacon_compatibility_size;
-
-    Instance()->BOFOutput.beacon_compatibility_output = NULL;
-    Instance()->BOFOutput.beacon_compatibility_size = 0;
-    Instance()->BOFOutput.beacon_compatibility_offset = 0;
-
-    return outdata;
+    // char *outdata = Instance()->BOFOutput.beacon_compatibility_output;
+    //
+    // if (outsize)
+    //     *outsize = Instance()->BOFOutput.beacon_compatibility_size;
+    //
+    // Instance()->BOFOutput.beacon_compatibility_output = NULL;
+    // Instance()->BOFOutput.beacon_compatibility_size = 0;
+    // Instance()->BOFOutput.beacon_compatibility_offset = 0;
+    //
+    // return outdata;
+    return NULL;
 }

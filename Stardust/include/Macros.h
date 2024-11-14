@@ -9,7 +9,6 @@
 #define InstanceOffset() (U_PTR(&__Instance_offset))
 #define InstancePtr() ((PINSTANCE)C_DEF(C_PTR(U_PTR(StRipStart()) + InstanceOffset())))
 #define Instance()        ( ( PINSTANCE ) __LocalInstance )
-// #define Instance()        ( ( PINSTANCE ) GetInstance() )
 
 
 #define STARDUST_INSTANCE PINSTANCE __LocalInstance = InstancePtr();
